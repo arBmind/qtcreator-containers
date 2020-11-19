@@ -1,0 +1,32 @@
+name: Build Docker Images
+
+on: push
+
+env:
+  QT_MAJOR: "515"
+  QT_VERSION: "5.15.0"
+
+jobs:
+  qtcreator-clang:
+    name: "QtCreator + Clang"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: focal
+            clang_major: 11
+            qtcreator: 4.14.b2            
+            QT_CREATOR_URL: "https://github.com/arBmind/qt-creator/releases/download/v4.14.beta2-patched-snapshot_2020-11-07/qtcreator-Linux-351350901.7z"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Clang${{ matrix.clang_major }} + QtCreator ${{ env.qtcreator }}
+        uses: docker/build-push-action@v1
+        with:
+          target: qtcreator-clang-qt
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: arbmind/qtcreator-clang
+          tags: latest,${{ matrix.qtcreator }}-${{ matrix.clang_major }}
+          build_args: DISTRO=${{ matrix.distro }},CLANG_MAJOR=${{ matrix.clang_major }},QT_MAJOR=${{ env.QT_MAJOR }},QT_VERSION=${{ env.QT_VERSION }},QT_CREATOR_URL=${{ matrix.QT_CREATOR_URL }}
