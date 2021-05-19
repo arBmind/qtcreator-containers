@@ -1,15 +1,11 @@
-# note: this would require --privileged
-# FROM ubuntu:bionic
-# ARG DISTRO=bionic
-
 ARG DISTRO=focal
 ARG USER=user
 ARG UID=1000
 ARG GID=1000
-ARG CLANG_MAJOR=11
+ARG CLANG_MAJOR=12
 ARG QT_MAJOR=515
 ARG QT_VERSION=5.15.0
-ARG QT_CREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v4.14.beta2-patched-snapshot_2020-11-07/qtcreator-Linux-351350901.7z"
+ARG QT_CREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v4.15.0-rc1-patched-snapshot-2021-05-02/qtcreator-Linux-803135866.7z"
 ARG RUNTIME_APT
 ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 ARG RUNTIME_FOCAL="libicu66 libglib2.0-0 libpcre2-16-0"
@@ -115,12 +111,9 @@ RUN \
   && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 
 # install qtcreator from CI build
-RUN \  
-  cd /opt \
-  && mkdir qtcreator \
-  && cd qtcreator \
-  && wget --progress=bar:force:noscroll -O qtcreator.7z ${QT_CREATOR_URL} \  
-  && 7z x qtcreator.7z \
+RUN \
+  wget --progress=bar:force:noscroll -O qtcreator.7z ${QT_CREATOR_URL} \
+  && 7z x -o/opt/qtcreator qtcreator.7z \
   && rm qtcreator.7z \
   && ln -s /opt/qtcreator/bin/qtcreator /usr/bin/qtcreator
 
@@ -133,7 +126,7 @@ RUN \
 # add user for development
 RUN \
   mkdir -p /home/${USER} \
-  mkdir -p /build \
+  && mkdir -p /build \
   && groupadd -g ${GID} ${USER} \
   && useradd -d /home/${USER} -s /bin/bash -m ${USER} -u ${UID} -g ${GID} \
   && echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER} \
