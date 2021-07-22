@@ -5,7 +5,7 @@ ARG GID=1000
 ARG CLANG_MAJOR=12
 ARG QT_MAJOR=515
 ARG QT_VERSION=5.15.0
-ARG QT_CREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v4.15.0-rc1-patched-snapshot-2021-05-02/qtcreator-Linux-803135866.7z"
+ARG QTCREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v4.15.0-rc1-patched-snapshot-2021-05-02/qtcreator-Linux-803135866.7z"
 ARG RUNTIME_APT
 ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 ARG RUNTIME_FOCAL="libicu66 libglib2.0-0 libpcre2-16-0"
@@ -55,7 +55,7 @@ ARG GID
 ARG CLANG_MAJOR
 ARG QT_MAJOR
 ARG QT_VERSION
-ARG QT_CREATOR_URL
+ARG QTCREATOR_URL
 ARG RUNTIME_APT
 ARG RUNTIME_FOCAL
 ARG RUNTIME_XENIAL
@@ -112,7 +112,7 @@ RUN \
 
 # install qtcreator from CI build
 RUN \
-  wget --progress=bar:force:noscroll -O qtcreator.7z ${QT_CREATOR_URL} \
+  wget --progress=bar:force:noscroll -O qtcreator.7z ${QTCREATOR_URL} \
   && 7z x -o/opt/qtcreator qtcreator.7z \
   && rm qtcreator.7z \
   && ln -s /opt/qtcreator/bin/qtcreator /usr/bin/qtcreator

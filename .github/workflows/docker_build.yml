@@ -15,8 +15,8 @@ jobs:
         include:
           - distro: focal
             clang_major: 12
-            qtcreator: 4.15.0
-            QT_CREATOR_URL: "https://github.com/arBmind/qt-creator/releases/download/v4.15.0-rc1-patched-snapshot-2021-05-02/qtcreator-Linux-803135866.7z"
+            qtcreator: 5.0.0-rc1
+            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v5.0.0-rc1-patched-snapshot-2021-07-16/qtcreator-Linux-1046272816.7z"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -44,4 +44,4 @@ jobs:
             CLANG_MAJOR=${{ matrix.clang_major }}
             QT_MAJOR=${{ env.QT_MAJOR }}
             QT_VERSION=${{ env.QT_VERSION }}
-            QT_CREATOR_URL=${{ matrix.QT_CREATOR_URL }}
+            QT_CREATOR_URL=${{ matrix.qtcreator_url }}
