@@ -39,9 +39,9 @@ jobs:
           tags: |
             arbmind/qtcreator-clang:latest
             arbmind/qtcreator-clang:${{ matrix.qtcreator }}-${{ matrix.clang_major }}
-          build_args: |
+          build-args: |
             DISTRO=${{ matrix.distro }}
             CLANG_MAJOR=${{ matrix.clang_major }}
             QT_MAJOR=${{ env.QT_MAJOR }}
             QT_VERSION=${{ env.QT_VERSION }}
-            QT_CREATOR_URL=${{ matrix.qtcreator_url }}
+            QTCREATOR_URL=${{ matrix.qtcreator_url }}
