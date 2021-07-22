@@ -113,6 +113,7 @@ RUN \
 # install qtcreator from CI build
 RUN \
   wget --progress=bar:force:noscroll -O qtcreator.7z ${QTCREATOR_URL} \
+  && mkdir /opt/qtcreator \
   && 7z x -o/opt/qtcreator qtcreator.7z \
   && rm qtcreator.7z \
   && ln -s /opt/qtcreator/bin/qtcreator /usr/bin/qtcreator
