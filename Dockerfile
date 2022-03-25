@@ -2,22 +2,41 @@ ARG DISTRO=focal
 ARG USER=user
 ARG UID=1000
 ARG GID=1000
-ARG CLANG_MAJOR=12
+ARG CLANG_MAJOR=13
 ARG GCC_MAJOR=11
-ARG QT_MAJOR=515
-ARG QT_VERSION=5.15.0
-ARG QTCREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v4.15.0-rc1-patched-snapshot-2021-05-02/qtcreator-Linux-803135866.7z"
+ARG QTCREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v7.0.0-patched-snapshot-2022-03-19/qtcreator-Linux-2011964361.7z"
+ARG QTCREATOR_VERSION="7.0.0-patched"
+ARG QT_ARCH=gcc_64
+ARG QT_VERSION=6.2.4
+ARG QT_MODULES=qtshadertools
 ARG RUNTIME_APT
 ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 ARG RUNTIME_FOCAL="libicu66 libglib2.0-0 libpcre2-16-0"
+
+FROM python:3.10-slim as qt_base
+ARG QT_VERSION
+ARG QT_MODULES
+
+RUN pip install aqtinstall
+
+RUN \
+  apt update --quiet \
+  && apt-get install --yes --quiet --no-install-recommends \
+    p7zip-full \
+    libglib2.0-0 \
+  && apt-get --yes autoremove \
+  && apt-get clean autoclean \
+  && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+RUN \
+  mkdir /qt && cd /qt \
+  && aqt install-qt linux desktop ${QT_VERSION} ${QT_ARCH} -m ${QT_MODULES} --external "7z"
 
 FROM ubuntu:${DISTRO} AS qtcreator_base
 ARG DISTRO
 ARG USER
 ARG UID
 ARG GID
-ARG QT_MAJOR
-ARG QT_VERSION
 ARG QTCREATOR_URL
 ARG RUNTIME_APT
 ARG RUNTIME_FOCAL
@@ -38,14 +57,13 @@ RUN \
     ca-certificates \
     gnupg \
     wget \
-  && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C65D51784EDC19A871DBDBB710C56D0DE9977759 \
-  && echo "deb http://ppa.launchpad.net/beineri/opt-qt-${QT_VERSION}-${DISTRO}/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/qt.list \
   && apt-get update --quiet \
   && if [ "${RUNTIME_APT}" != "" ] ; then export "RUNTIME_APT2=${RUNTIME_APT}" ; \
     elif [ "${DISTRO}" = "xenial" ] ; then export "RUNTIME_APT2=${RUNTIME_XENIAL}" ; \
     else export "RUNTIME_APT2=${RUNTIME_FOCAL}" ; \
     fi \
-  && apt-get install --yes --quiet --no-install-recommends ${RUNTIME_APT2} \
+  && apt-get install --yes --quiet --no-install-recommends \
+    ${RUNTIME_APT2} \
     sudo \
     git \
     vim \
@@ -55,6 +73,7 @@ RUN \
     p7zip-full \
     xterm \
     xdg-utils \
+    libdbus-1-3 \
     libgl1-mesa-dri \
     libgl1-mesa-glx \
     libxcb-keysyms1 \
@@ -62,6 +81,8 @@ RUN \
     libxcb-xfixes0 \
     libxcb-icccm4 \
     libxcb-image0 \
+    libxcb-randr0 \
+    libxcb-shape0 \
     libgssapi-krb5-2 \
     libxcb-xinerama0 \
     libxcb-xkb1 \
@@ -69,17 +90,6 @@ RUN \
     libharfbuzz-icu0 \
     libegl1-mesa-dev \
     libglu1-mesa-dev  \
-    qt${QT_MAJOR}base \
-    qt${QT_MAJOR}declarative \
-    qt${QT_MAJOR}tools \
-    qt${QT_MAJOR}svg \
-    qt${QT_MAJOR}serialport \
-    qt${QT_MAJOR}quickcontrols \
-    qt${QT_MAJOR}quickcontrols2 \
-    qt${QT_MAJOR}graphicaleffects \
-    qt${QT_MAJOR}location \
-    qt${QT_MAJOR}imageformats \
-    qt${QT_MAJOR}translations \
   && apt-get --yes autoremove \
   && apt-get clean autoclean \
   && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
@@ -95,8 +105,6 @@ RUN \
 # preconfigure qtcreator
 COPY config/qtversion.xml /home/${USER}/.config/QtProject/qtcreator/qtversion.xml
 COPY config/QtCreator.ini /home/${USER}/.config/QtProject/QtCreator.ini
-RUN \
-  sed -i "s/\${QT_MAJOR}/$QT_MAJOR/g" /home/${USER}/.config/QtProject/qtcreator/qtversion.xml
 
 # add user for development
 RUN \
@@ -142,9 +150,9 @@ FROM qtcreator_clang_base AS qtcreator-clang
 ARG USER
 ARG DISTRO
 ARG CLANG_MAJOR
-ARG QT_VERSION
+ARG QTCREATOR_VERSION
 
-LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + QtCreator + Qt ${QT_VERSION}"
+LABEL Description="Ubuntu ${DISTRO} - Clang-${CLANG_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
 
 USER ${USER}
 ENV \
@@ -152,14 +160,9 @@ ENV \
   XDG_RUNTIME_DIR=/tmp/runtime-${USER}
 
 
-FROM qtcreator_clang_base AS qtcreator-clang-libstdcpp
-ARG USER
+FROM qtcreator_clang_base AS qtcreator_clang_libstdcpp_base
 ARG DISTRO
 ARG GCC_MAJOR
-ARG CLANG_MAJOR
-ARG QT_VERSION
-
-LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + libstdc++-${GCC_MAJOR} + QtCreator + Qt ${QT_VERSION}"
 
 # install Clang (https://apt.llvm.org/) with format and debugger
 RUN \
@@ -172,19 +175,44 @@ RUN \
   && apt-get clean autoclean \
   && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 
+
+FROM qtcreator_clang_libstdcpp_base AS qtcreator-clang-libstdcpp
+ARG USER
+ARG DISTRO
+ARG GCC_MAJOR
+ARG CLANG_MAJOR
+ARG QTCREATOR_VERSION
+
+LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + libstdc++-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
+
 USER ${USER}
 ENV \
   HOME=/home/${USER} \
   XDG_RUNTIME_DIR=/tmp/runtime-${USER}
 
 
-FROM qtcreator_base AS qtcreator-gcc
+FROM qtcreator_clang_libstdcpp_base AS qtcreator-clang-libstdcpp-qt
 ARG USER
 ARG DISTRO
+ARG CLANG_MAJOR
 ARG GCC_MAJOR
+ARG QTCREATOR_VERSION
+ARG QT_ARCH
 ARG QT_VERSION
 
-LABEL Description="Ubuntu ${DISTRO} - GCC${GCC_MAJOR} + QtCreator + Qt ${QT_VERSION}"
+LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + libstdc++-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION} + Qt-${QT_VERSION}"
+
+COPY --from=qt_base /qt/${QT_VERSION}/${QT_ARCH} /opt/qt
+
+USER ${USER}
+ENV \
+  HOME=/home/${USER} \
+  XDG_RUNTIME_DIR=/tmp/runtime-${USER}
+
+
+FROM qtcreator_base AS qtcreator_gcc_base
+ARG DISTRO
+ARG GCC_MAJOR
 
 # install Clang (https://apt.llvm.org/) with format and debugger
 RUN \
@@ -194,10 +222,38 @@ RUN \
   && apt-get install --yes --quiet --no-install-recommends \
     gcc-${GCC_MAJOR} \
     g++-${GCC_MAJOR} \
+    libstdc++-${GCC_MAJOR}-dev \
     gdb \
   && apt-get --yes autoremove \
   && apt-get clean autoclean \
   && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+
+FROM qtcreator_gcc_base AS qtcreator-gcc
+ARG USER
+ARG DISTRO
+ARG GCC_MAJOR
+ARG QTCREATOR_VERSION
+
+LABEL Description="Ubuntu ${DISTRO} - GCC-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
+
+USER ${USER}
+ENV \
+  HOME=/home/${USER} \
+  XDG_RUNTIME_DIR=/tmp/runtime-${USER}
+
+
+FROM qtcreator_gcc_base AS qtcreator-gcc-qt
+ARG USER
+ARG DISTRO
+ARG GCC_MAJOR
+ARG QTCREATOR_VERSION
+ARG QT_ARCH
+ARG QT_VERSION
+
+LABEL Description="Ubuntu ${DISTRO} - GCC-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION} + Qt-${QT_VERSION}"
+
+COPY --from=qt_base /qt/${QT_VERSION}/${QT_ARCH} /opt/qt
 
 USER ${USER}
 ENV \

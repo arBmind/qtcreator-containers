@@ -2,32 +2,39 @@ name: Build Docker Images
 
 on: push
 
-env:
-  QT_MAJOR: "515"
-  QT_VERSION: "5.15.2"
-
 jobs:
   qtcreator-clang:
-    name: "QtCreator + Clang"
+    name: "QtCreator"
     strategy:
       fail-fast: false
       matrix:
         include:
           - distro: focal
             gcc_major: 11
-            clang_major: 12
-            qtcreator: 5.0.2-patched
-            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v5.0.2-patched-2021-10-03/qtcreator-Linux-1301231079.7z"
-            tags: ''
-            libstdcpp_tags: ''
+            clang_major: 13
+            qtcreator: 7.0.0-patched
+            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.0-patched-snapshot-2022-03-19/qtcreator-Linux-2011964361.7z"
+            qt_version: 6.2.4
+            clang_tags: arbmind/qtcreator-clang:latest
+            clang_qt_tags: arbmind/qtcreator-clang-qt:latest
+            clang_libstdcpp_tags: arbmind/qtcreator-clang-libstdcpp:latest
+            clang_libstdcpp_qt_tags: arbmind/qtcreator-clang-libstdcpp-qt:latest
+            gcc_tags: arbmind/qtcreator-gcc:latest
+            gcc_qt_tags: arbmind/qtcreator-gcc-qt:latest
 
           - distro: focal
             gcc_major: 11
-            clang_major: 13
-            qtcreator: 5.0.2-patched
-            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v5.0.2-patched-2021-10-03/qtcreator-Linux-1301231079.7z"
-            tags: arbmind/qtcreator-clang:latest
-            libstdcpp_tags: arbmind/qtcreator-clang-libstdcpp:latest
+            clang_major: 12
+            qtcreator: 7.0.0-patched
+            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.0-patched-snapshot-2022-03-19/qtcreator-Linux-2011964361.7z"
+            qt_version: 6.2.4
+            clang_tags: ''
+            clang_qt_tags: ''
+            clang_libstdcpp_tags: ''
+            clang_libstdcpp_qt_tags: ''
+            gcc_tags: ''
+            gcc_qt_tags: ''
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -49,13 +56,13 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             arbmind/qtcreator-clang:${{ matrix.qtcreator }}-${{ matrix.clang_major }}
-            ${{ matrix.tags }}
+            ${{ matrix.clang_tags }}
           build-args: |
             DISTRO=${{ matrix.distro }}
             CLANG_MAJOR=${{ matrix.clang_major }}
-            QT_MAJOR=${{ env.QT_MAJOR }}
-            QT_VERSION=${{ env.QT_VERSION }}
+            QT_CREATOR_VERSION=${{ matrix.qtcreator }}
             QTCREATOR_URL=${{ matrix.qtcreator_url }}
+            QTCREATOR_VERSION=${{ matrix.qtcreator }}
 
       - name: QtCreator ${{ matrix.qtcreator }} + Clang${{ matrix.clang_major }} + libstdc++-${{ matrix.gcc_major }}
         uses: docker/build-push-action@v2
@@ -64,38 +71,30 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             arbmind/qtcreator-clang-libstdcpp:${{ matrix.qtcreator }}-${{ matrix.clang_major }}-${{ matrix.gcc_major }}
-            ${{ matrix.libstdcpp_tags }}
+            ${{ matrix.clang_libstdcpp_tags }}
           build-args: |
             DISTRO=${{ matrix.distro }}
             GCC_MAJOR=${{ matrix.gcc_major }}
             CLANG_MAJOR=${{ matrix.clang_major }}
-            QT_MAJOR=${{ env.QT_MAJOR }}
-            QT_VERSION=${{ env.QT_VERSION }}
+            QT_VERSION=${{ matrix.qt_version }}
             QTCREATOR_URL=${{ matrix.qtcreator_url }}
-  qtcreator-gcc:
-    name: "QtCreator + GCC"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - distro: focal
-            gcc_major: 11
-            qtcreator: 5.0.2-patched
-            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v5.0.2-patched-2021-10-03/qtcreator-Linux-1301231079.7z"
-            tags: arbmind/qtcreator-gcc:latest
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+            QTCREATOR_VERSION=${{ matrix.qtcreator }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to DockerHub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
+      - name: QtCreator ${{ matrix.qtcreator }} + Clang${{ matrix.clang_major }} + libstdc++-${{ matrix.gcc_major }} + Qt-${{ matrix.qt_version }}
+        uses: docker/build-push-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          target: qtcreator-clang-libstdcpp-qt
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            arbmind/qtcreator-clang-libstdcpp-qt:${{ matrix.qtcreator }}-${{ matrix.clang_major }}-${{ matrix.gcc_major }}-${{ matrix.qt_version }}
+            ${{ matrix.clang_libstdcpp_qt_tags }}
+          build-args: |
+            DISTRO=${{ matrix.distro }}
+            GCC_MAJOR=${{ matrix.gcc_major }}
+            CLANG_MAJOR=${{ matrix.clang_major }}
+            QT_VERSION=${{ matrix.qt_version }}
+            QTCREATOR_URL=${{ matrix.qtcreator_url }}
+            QTCREATOR_VERSION=${{ matrix.qtcreator }}
 
       - name: QtCreator ${{ matrix.qtcreator }} + GCC${{ matrix.gcc_major }}
         uses: docker/build-push-action@v2
@@ -104,10 +103,25 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             arbmind/qtcreator-gcc:${{ matrix.qtcreator }}-${{ matrix.gcc_major }}
-            ${{ matrix.tags }}
+            ${{ matrix.gcc_tags }}
           build-args: |
             DISTRO=${{ matrix.distro }}
             GCC_MAJOR=${{ matrix.gcc_major }}
-            QT_MAJOR=${{ env.QT_MAJOR }}
-            QT_VERSION=${{ env.QT_VERSION }}
+            QT_VERSION=${{ matrix.qt_version }}
             QTCREATOR_URL=${{ matrix.qtcreator_url }}
+            QTCREATOR_VERSION=${{ matrix.qtcreator }}
+
+      - name: QtCreator ${{ matrix.qtcreator }} + GCC${{ matrix.gcc_major }} + Qt-${{ matrix.qt_version }}
+        uses: docker/build-push-action@v2
+        with:
+          target: qtcreator-gcc-qt
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            arbmind/qtcreator-gcc-qt:${{ matrix.qtcreator }}-${{ matrix.gcc_major }}-${{ matrix.qt_version }}
+            ${{ matrix.gcc_qt_tags }}
+          build-args: |
+            DISTRO=${{ matrix.distro }}
+            GCC_MAJOR=${{ matrix.gcc_major }}
+            QT_VERSION=${{ matrix.qt_version }}
+            QTCREATOR_URL=${{ matrix.qtcreator_url }}
+            QTCREATOR_VERSION=${{ matrix.qtcreator }}
