@@ -9,13 +9,15 @@ ARG QTCREATOR_VERSION="7.0.0-patched"
 ARG QT_ARCH=gcc_64
 ARG QT_VERSION=6.2.4
 ARG QT_MODULES=qtshadertools
-ARG RUNTIME_APT
-ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
-ARG RUNTIME_FOCAL="libicu66 libglib2.0-0 libpcre2-16-0"
+ARG RUNTIME_APT="libicu66 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
+# ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 
 FROM python:3.10-slim as qt_base
+ARG QT_ARCH
 ARG QT_VERSION
 ARG QT_MODULES
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN pip install aqtinstall
 
@@ -32,6 +34,7 @@ RUN \
   mkdir /qt && cd /qt \
   && aqt install-qt linux desktop ${QT_VERSION} ${QT_ARCH} -m ${QT_MODULES} --external "7z"
 
+
 FROM ubuntu:${DISTRO} AS qtcreator_base
 ARG DISTRO
 ARG USER
@@ -39,12 +42,10 @@ ARG UID
 ARG GID
 ARG QTCREATOR_URL
 ARG RUNTIME_APT
-ARG RUNTIME_FOCAL
-ARG RUNTIME_XENIAL
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+ARG DEBIAN_FRONTEND=noninteractive
 
 ENV \
-  APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \
-  DEBIAN_FRONTEND=noninteractive \
   LANG=C.UTF-8 \
   LC_ALL=C.UTF-8
 
@@ -58,12 +59,8 @@ RUN \
     gnupg \
     wget \
   && apt-get update --quiet \
-  && if [ "${RUNTIME_APT}" != "" ] ; then export "RUNTIME_APT2=${RUNTIME_APT}" ; \
-    elif [ "${DISTRO}" = "xenial" ] ; then export "RUNTIME_APT2=${RUNTIME_XENIAL}" ; \
-    else export "RUNTIME_APT2=${RUNTIME_FOCAL}" ; \
-    fi \
   && apt-get install --yes --quiet --no-install-recommends \
-    ${RUNTIME_APT2} \
+    ${RUNTIME_APT} \
     sudo \
     git \
     vim \
@@ -122,6 +119,8 @@ WORKDIR /build
 FROM qtcreator_base AS qtcreator_clang_base
 ARG DISTRO
 ARG CLANG_MAJOR
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+ARG DEBIAN_FRONTEND=noninteractive
 
 # install Clang (https://apt.llvm.org/) with format and debugger
 RUN \
@@ -163,8 +162,9 @@ ENV \
 FROM qtcreator_clang_base AS qtcreator_clang_libstdcpp_base
 ARG DISTRO
 ARG GCC_MAJOR
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+ARG DEBIAN_FRONTEND=noninteractive
 
-# install Clang (https://apt.llvm.org/) with format and debugger
 RUN \
   apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F \
   && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/gcc.list \
@@ -213,6 +213,8 @@ ENV \
 FROM qtcreator_base AS qtcreator_gcc_base
 ARG DISTRO
 ARG GCC_MAJOR
+ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
+ARG DEBIAN_FRONTEND=noninteractive
 
 # install Clang (https://apt.llvm.org/) with format and debugger
 RUN \

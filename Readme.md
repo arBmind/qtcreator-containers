@@ -66,7 +66,7 @@ Targets:
 
 Note: qtcreator-clang-qt is missing because the Qt Company does not publish binaries built for libc++
 
-Each of the targets uses a subset arguments to determine the versions.
+Each of the targets uses a subset of arguments to determine the versions.
 
 QtCreator is preconfigured to run Gui applications properly.
 
