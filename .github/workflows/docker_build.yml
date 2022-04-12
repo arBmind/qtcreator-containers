@@ -13,8 +13,8 @@ jobs:
             gcc_major: 11
             clang_major: 14
             qtcreator: 7.0.1-patched
-            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.1-patched-snapshot-2022-03-25/qtcreator-Linux-2039706631.7z"
-            qt_version: 6.2.4
+            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.1-patched-snapshot-2022-04-02/qtcreator-Linux-2083095478.7z"
+            qt_version: 6.3.0
             clang_tags: arbmind/qtcreator-clang:latest
             clang_libstdcpp_tags: arbmind/qtcreator-clang-libstdcpp:latest
             clang_libstdcpp_qt_tags: arbmind/qtcreator-clang-libstdcpp-qt:latest
@@ -25,8 +25,8 @@ jobs:
             gcc_major: 11
             clang_major: 13
             qtcreator: 7.0.1-patched
-            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.1-patched-snapshot-2022-03-25/qtcreator-Linux-2039706631.7z"
-            qt_version: 6.2.4
+            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.1-patched-snapshot-2022-04-02/qtcreator-Linux-2083095478.7z"
+            qt_version: 6.3.0
 
     runs-on: ubuntu-latest
     steps:
