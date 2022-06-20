@@ -9,7 +9,7 @@ ARG QTCREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v7.0.
 ARG QT_ARCH=gcc_64
 ARG QT_VERSION=6.2.4
 ARG QT_MODULES=qtshadertools
-ARG RUNTIME_APT="libicu66 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
+ARG RUNTIME_APT="libicu70 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
 # ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 
 FROM python:3.10-slim as qt_base
@@ -52,7 +52,7 @@ ENV \
 # install prerequisites to run qtcreator, tools and Qt
 RUN \
   apt-get update --quiet \
-  && apt-get upgrade \
+  && apt-get upgrade --yes --quiet \
   && apt-get install --yes --quiet --no-install-recommends \
     apt-transport-https \
     ca-certificates \

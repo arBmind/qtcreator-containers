@@ -9,7 +9,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - distro: focal
+          - distro: jammy
             gcc_major: 12
             clang_major: 14
             qtcreator: 7.0.3-patched
@@ -21,7 +21,7 @@ jobs:
             gcc_tags: arbmind/qtcreator-gcc:latest
             gcc_qt_tags: arbmind/qtcreator-gcc-qt:latest
 
-          - distro: focal
+          - distro: jammy
             gcc_major: 12
             clang_major: 13
             qtcreator: 7.0.3-patched
