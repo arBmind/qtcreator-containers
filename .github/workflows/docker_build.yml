@@ -10,10 +10,10 @@ jobs:
       matrix:
         include:
           - distro: focal
-            gcc_major: 11
+            gcc_major: 12
             clang_major: 14
-            qtcreator: 7.0.1-patched
-            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.1-patched-snapshot-2022-04-02/qtcreator-Linux-2083095478.7z"
+            qtcreator: 7.0.3-patched
+            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.3-patched-snapshot-2022-06-06/qtcreator-Linux-2448806200.7z"
             qt_version: 6.3.0
             clang_tags: arbmind/qtcreator-clang:latest
             clang_libstdcpp_tags: arbmind/qtcreator-clang-libstdcpp:latest
@@ -22,10 +22,10 @@ jobs:
             gcc_qt_tags: arbmind/qtcreator-gcc-qt:latest
 
           - distro: focal
-            gcc_major: 11
+            gcc_major: 12
             clang_major: 13
-            qtcreator: 7.0.1-patched
-            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.1-patched-snapshot-2022-04-02/qtcreator-Linux-2083095478.7z"
+            qtcreator: 7.0.3-patched
+            qtcreator_url: "https://github.com/arBmind/qt-creator/releases/download/v7.0.3-patched-snapshot-2022-06-06/qtcreator-Linux-2448806200.7z"
             qt_version: 6.3.0
 
     runs-on: ubuntu-latest

@@ -22,9 +22,18 @@ You will need to have a X server.
 docker run -it \
     -e DISPLAY=host.docker.internal:0 \
     --mount src="$(pwd)",target=/build,type=bind \
-    arbmind/qtcreator-clang-qt:latest \
+    arbmind/qtcreator-gcc-qt:latest \
     qtcreator myproject.qbs
 ```
+
+```bash
+docker run -it \
+    -e DISPLAY=host.docker.internal:0 \
+    --mount src="$(pwd)",target=/build,type=bind \
+    arbmind/qtcreator-clang-libstdcpp-qt:latest \
+    qtcreator myproject.qbs
+```
+
 
 Description:
 * define the display variable to use Docker
@@ -42,12 +51,11 @@ volumes:
 
 services:
   costaco6:
-    image: arbmind/qtcreator-gcc-qt:7.0.0-patched-11-6.2.4
+    image: arbmind/qtcreator-gcc-qt:latest
     environment:
       - DISPLAY=host.docker.internal:0
-    command: qtcreator Costaco.qbs
+    command: qtcreator myproject.qbs
     volumes:
-      - ./qt624_gcc/:/opt/qt
       - ./repository/:/build
       - tmp:/tmp
 ```
