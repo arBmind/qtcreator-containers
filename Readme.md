@@ -1,22 +1,18 @@
 # Docker images for QtCreator
 
-These docker images allow you to use QtCreator on Linux or WSL2 with Docker, without a lot of setup.
+This project builds Docker images with QtCreator and various compilers used to build and debug C++ and Gui applications using WSL and Docker.
 
-## Options
-
-compilers and standard libraries:
-* Clang/libc++
-* Clang/libstdc++
-* GCC/libstdc++
-
-Qt:
-* none (bring your own)
-* Qt official builds (using aqtinstall)
+| Image (latest versions) | Size |
+| -- | -- |
+| [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/arbmind/qtcreator-clang?color=black&label=arbmind%2Fqtcreator-clang&logo=Docker&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-clang) | [![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/arbmind/qtcreator-clang?color=g&logo=Ubuntu&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-clang) |
+| [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/arbmind/qtcreator-clang-libstdcpp?color=black&label=arbmind%2Fqtcreator-clang-libstdcpp&logo=Docker&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-clang-libstdcpp) | [![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/arbmind/qtcreator-clang-libstdcpp?color=green&logo=Ubuntu&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-clang-libstdcpp) |
+| [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/arbmind/qtcreator-clang-libstdcpp-qt?color=black&label=arbmind%2Fqtcreator-clang-libstdcpp-qt&logo=Docker&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-clang-libstdcpp-qt) | [![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/arbmind/qtcreator-clang-libstdcpp-qt?color=yellow&logo=Ubuntu&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-clang-libstdcpp-qt) |
+| [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/arbmind/qtcreator-gcc?color=black&label=arbmind%2Fqtcreator-gcc&logo=Docker&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-gcc) | [![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/arbmind/qtcreator-gcc?color=green&logo=Ubuntu&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-gcc) |
+| [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/arbmind/qtcreator-gcc-qt?color=black&label=arbmind%2Fqtcreator-gcc-qt&logo=Docker&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-gcc-qt) | [![Docker Image Size (latest semver)](https://img.shields.io/docker/image-size/arbmind/qtcreator-gcc-qt?color=red&logo=Ubuntu&sort=semver)](https://hub.docker.com/r/arbmind/qtcreator-gcc-qt) |
 
 ## Usage
 
-You can use the image with Docker directly.
-You will need to have a X server.
+Prerequiste: X server (Win11 or [VcXsrv](https://sourceforge.net/projects/vcxsrv/))
 
 ```bash
 docker run -it \
@@ -34,7 +30,6 @@ docker run -it \
     qtcreator myproject.qbs
 ```
 
-
 Description:
 * define the display variable to use Docker
 * mount the current directory to the `/build` folder
@@ -50,7 +45,7 @@ volumes:
   tmp: # cached builds
 
 services:
-  costaco6:
+  myproject:
     image: arbmind/qtcreator-gcc-qt:latest
     environment:
       - DISPLAY=host.docker.internal:0
@@ -65,16 +60,7 @@ services:
 The Dockerfile is multi staged and has different targets for all the variants.
 All targets with underscores are meant to be internally only.
 
-Targets:
-* qtcreator-clang
-* qtcreator-clang-libstdcpp
-* qtcreator-clang-libstdcpp-qt
-* qtcreator-gcc
-* qtcreator-gcc-qt
-
-Note: qtcreator-clang-qt is missing because the Qt Company does not publish binaries built for libc++
-
-Each of the targets uses a subset of arguments to determine the versions.
+Note: The Clang Qt combination is missing because the Qt Company does not publish binaries built for libc++
 
 QtCreator is preconfigured to run Gui applications properly.
 
