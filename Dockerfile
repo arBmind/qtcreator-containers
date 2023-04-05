@@ -86,7 +86,9 @@ RUN \
     libxkbcommon-x11-0 \
     libharfbuzz-icu0 \
     libegl1-mesa-dev \
-    libglu1-mesa-dev  \
+    libglu1-mesa-dev \
+    libwayland-egl1 \
+    libwayland-cursor0 \
   && apt-get --yes autoremove \
   && apt-get clean autoclean \
   && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*

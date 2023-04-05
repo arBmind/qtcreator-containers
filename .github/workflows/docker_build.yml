@@ -9,9 +9,9 @@ jobs:
       fail-fast: false
       matrix:
         distro: ['jammy']
-        clang_major: [14, 15, 16]
+        clang_major: [15, 16]
         gcc_major: [12]
-        qt_version: ['6.4.2']
+        qt_version: ['6.4.3', '6.5.0']
         qtcreator: [
           {version: "9.0.2-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v9.0.2-snapshot-2023-04-02/qtcreator-Linux-4590736396.7z"},
           {version: "10.0.0", url: "https://github.com/qt-creator/qt-creator/releases/download/v10.0.0/qtcreator-linux-x64-10.0.0.7z"},
@@ -22,7 +22,7 @@ jobs:
           - distro: jammy
             clang_major: 16
             gcc_major: 12
-            qt_version: '6.4.2'
+            qt_version: '6.5.0'
             qtcreator: {version: "10.0.1-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v10.0.1-snapshot-2023-04-02/qtcreator-linux-x64-4589869247.7z"}
             clang_tags: arbmind/qtcreator-clang:latest
             clang_libstdcpp_tags: arbmind/qtcreator-clang-libstdcpp:latest
