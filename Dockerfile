@@ -1,15 +1,23 @@
-ARG DISTRO=focal
+ARG DISTRO=lunar
 ARG USER=user
 ARG UID=1000
 ARG GID=1000
-ARG CLANG_MAJOR=13
-ARG GCC_MAJOR=11
-ARG QTCREATOR_VERSION="7.0.0-patched"
-ARG QTCREATOR_URL="https://github.com/arBmind/qt-creator/releases/download/v7.0.0-patched-snapshot-2022-03-19/qtcreator-Linux-2011964361.7z"
+ARG CLANG_MAJOR=16
+# clang source options:
+# apt - directly use apt version
+# llvm - add llvm distro repo
+ARG CLANG_SOURCE=apt
+ARG GCC_MAJOR=13
+# gcc source options:
+# apt - directly use apt version
+# ppa - add toolchain ppa
+ARG GCC_SOURCE=apt
+ARG QTCREATOR_VERSION="10.0.1-patched"
+ARG QTCREATOR_URL="https://github.com/hicknhack-software/Qt-Creator/releases/download/v10.0.1-snapshot-2023-04-02/qtcreator-linux-x64-4589869247.7z"
 ARG QT_ARCH=gcc_64
-ARG QT_VERSION=6.2.4
+ARG QT_VERSION=6.5.0
 ARG QT_MODULES=qtshadertools
-ARG RUNTIME_APT="libicu70 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
+ARG RUNTIME_APT="libicu72 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
 # ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 
 FROM python:3.10-slim as qt_base
@@ -109,8 +117,8 @@ COPY config/QtCreator.ini /home/${USER}/.config/QtProject/QtCreator.ini
 RUN \
   mkdir -p /home/${USER} \
   && mkdir -p /build \
-  && groupadd -g ${GID} ${USER} \
-  && useradd -d /home/${USER} -s /bin/bash -m ${USER} -u ${UID} -g ${GID} \
+  && groupadd -o -g ${GID} ${USER} \
+  && useradd -o -d /home/${USER} -s /bin/bash -m ${USER} -u ${UID} -g ${GID} \
   && echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER} \
   && chmod 0440 /etc/sudoers.d/${USER} \
   && chown ${UID}:${GID} -R /home/${USER} /build
@@ -121,14 +129,17 @@ WORKDIR /build
 FROM qtcreator_base AS qtcreator_clang_base
 ARG DISTRO
 ARG CLANG_MAJOR
+ARG CLANG_SOURCE
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 ARG DEBIAN_FRONTEND=noninteractive
 
 # install Clang (https://apt.llvm.org/) with format and debugger
 RUN \
-  wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
-  && echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-${CLANG_MAJOR} main" > /etc/apt/sources.list.d/llvm.list \
-  && apt-get update --quiet \
+  if [ "$CLANG_SOURCE" = "llvm" ] ; then \
+    wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
+    && echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-${CLANG_MAJOR} main" > /etc/apt/sources.list.d/llvm.list \
+    && apt-get update --quiet \
+    ; fi \
   && apt-get install --yes --quiet --no-install-recommends \
     clang-${CLANG_MAJOR} \
     clang-format-${CLANG_MAJOR} \
@@ -164,13 +175,16 @@ ENV \
 FROM qtcreator_clang_base AS qtcreator_clang_libstdcpp_base
 ARG DISTRO
 ARG GCC_MAJOR
+ARG GCC_SOURCE
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN \
-  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F \
-  && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/gcc.list \
-  && apt-get update --quiet \
+  if [ "$GCC_SOURCE" = "ppa" ] ; then \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F \
+    && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/gcc.list \
+    && apt-get update --quiet \
+    ; fi \
   && apt-get install --yes --quiet --no-install-recommends \
     libstdc++-${GCC_MAJOR}-dev \
   && apt-get --yes autoremove \
@@ -215,14 +229,17 @@ ENV \
 FROM qtcreator_base AS qtcreator_gcc_base
 ARG DISTRO
 ARG GCC_MAJOR
+ARG GCC_SOURCE
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 ARG DEBIAN_FRONTEND=noninteractive
 
 # install Clang (https://apt.llvm.org/) with format and debugger
 RUN \
-  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F \
-  && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/gcc.list \
-  && apt-get update --quiet \
+  if [ "$GCC_SOURCE" = "ppa" ] ; then \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F \
+    && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/gcc.list \
+    && apt-get update --quiet \
+    ; fi \
   && apt-get install --yes --quiet --no-install-recommends \
     gcc-${GCC_MAJOR} \
     g++-${GCC_MAJOR} \
