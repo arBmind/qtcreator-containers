@@ -16,19 +16,19 @@ jobs:
         gcc: [
           {major: 13, source: 'apt'}
         ]
-        qt_version: ['6.4.3', '6.5.1']
+        qt_version: ['6.4.3', '6.5.2']
         qtcreator: [
-          {version: "9.0.2-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v9.0.2-snapshot-2023-04-02/qtcreator-Linux-4590736396.7z"},
-          {version: "10.0.1", url: "https://github.com/qt-creator/qt-creator/releases/download/v10.0.1/qtcreator-linux-x64-10.0.1.7z"},
-          {version: "10.0.1-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v10.0.1-snapshot-2023-04-02/qtcreator-linux-x64-4589869247.7z"}
+          {version: "10.0.1-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v10.0.1-snapshot-2023-04-02/qtcreator-linux-x64-4589869247.7z"},
+          {version: "11.0.0", url: "https://github.com/qt-creator/qt-creator/releases/download/v11.0.0/qtcreator-linux-x64-11.0.0.7z"},
+          {version: "11.0.0-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v11.0.0-patched/qtcreator-linux-x64-5627262990.7z"}
         ]
 
         include:
           - distro: lunar
             clang: {major: 16, source: 'apt'}
             gcc: {major: 13, source: 'apt'}
-            qt_version: '6.5.1'
-            qtcreator: {version: "10.0.1-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v10.0.1-snapshot-2023-04-02/qtcreator-linux-x64-4589869247.7z"}
+            qt_version: '6.5.2'
+            qtcreator: {version: "11.0.0-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v11.0.0-patched/qtcreator-linux-x64-5627262990.7z"}
             clang_tags: arbmind/qtcreator-clang:latest
             clang_libstdcpp_tags: arbmind/qtcreator-clang-libstdcpp:latest
             clang_libstdcpp_qt_tags: arbmind/qtcreator-clang-libstdcpp-qt:latest
