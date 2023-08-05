@@ -165,6 +165,7 @@ ARG CLANG_MAJOR
 ARG QTCREATOR_VERSION
 
 LABEL Description="Ubuntu ${DISTRO} - Clang-${CLANG_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
+LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
 
 USER ${USER}
 ENV \
@@ -200,6 +201,7 @@ ARG CLANG_MAJOR
 ARG QTCREATOR_VERSION
 
 LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + libstdc++-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
+LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
 
 USER ${USER}
 ENV \
@@ -217,6 +219,7 @@ ARG QT_ARCH
 ARG QT_VERSION
 
 LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + libstdc++-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION} + Qt-${QT_VERSION}"
+LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
 
 COPY --from=qt_base /qt/${QT_VERSION}/${QT_ARCH} /opt/qt
 
@@ -257,6 +260,7 @@ ARG GCC_MAJOR
 ARG QTCREATOR_VERSION
 
 LABEL Description="Ubuntu ${DISTRO} - GCC-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
+LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
 
 USER ${USER}
 ENV \
@@ -273,6 +277,7 @@ ARG QT_ARCH
 ARG QT_VERSION
 
 LABEL Description="Ubuntu ${DISTRO} - GCC-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION} + Qt-${QT_VERSION}"
+LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
 
 COPY --from=qt_base /qt/${QT_VERSION}/${QT_ARCH} /opt/qt
 
