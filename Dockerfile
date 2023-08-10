@@ -78,6 +78,7 @@ RUN \
     p7zip-full \
     xterm \
     xdg-utils \
+    libpulse0 \
     libdbus-1-3 \
     libgl1-mesa-dri \
     libgl1-mesa-glx \
@@ -88,6 +89,7 @@ RUN \
     libxcb-image0 \
     libxcb-randr0 \
     libxcb-shape0 \
+    libxcb-cursor0 \
     libgssapi-krb5-2 \
     libxcb-xinerama0 \
     libxcb-xkb1 \
