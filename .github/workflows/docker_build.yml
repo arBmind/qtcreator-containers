@@ -11,7 +11,8 @@ jobs:
         distro: ['lunar']
         clang: [
           {major: 15, source: 'apt'},
-          {major: 16, source: 'apt'}
+          {major: 16, source: 'apt'},
+          {major: 17, source: 'llvm'}
         ]
         gcc: [
           {major: 13, source: 'apt'}
@@ -25,7 +26,7 @@ jobs:
 
         include:
           - distro: lunar
-            clang: {major: 16, source: 'apt'}
+            clang: {major: 17, source: 'llvm'}
             gcc: {major: 13, source: 'apt'}
             qt_version: '6.5.2'
             qtcreator: {version: "11.0.2-patched", url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v11.0.2-patched/qtcreator-linux-x64-5866008750.7z"}
