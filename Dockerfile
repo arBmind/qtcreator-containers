@@ -117,12 +117,12 @@ COPY config/QtCreator.ini /home/${USER}/.config/QtProject/QtCreator.ini
 
 # add user for development
 RUN \
-  mkdir -p /home/${USER} \
-  && mkdir -p /build \
-  && groupadd -o -g ${GID} ${USER} \
-  && useradd -o -d /home/${USER} -s /bin/bash -m ${USER} -u ${UID} -g ${GID} \
+  if [ "${UID}" = "1000" ] ; then userdel --remove ubuntu ; fi \
+  && groupadd --gid ${GID} ${USER} \
+  && useradd --create-home --home-dir /home/${USER} --shell /bin/bash ${USER} --uid ${UID} --gid ${GID} \
   && echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER} \
   && chmod 0440 /etc/sudoers.d/${USER} \
+  && mkdir -p /build \
   && chown ${UID}:${GID} -R /home/${USER} /build
 
 WORKDIR /build
