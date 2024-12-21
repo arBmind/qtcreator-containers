@@ -21,33 +21,35 @@ ARG RUNTIME_APT="libicu74 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
 # ARG RUNTIME_LUNAR="libicu72 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
 # ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 
-FROM python:3.10-slim as qt_base
+
+FROM python:3.10-slim AS qt_base
 ARG QT_ARCH
 ARG QT_VERSION
 ARG QT_MODULES
 ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN pip install aqtinstall
-
-RUN <<INSTALL_7ZIP
-  apt update --quiet
-  apt-get install --yes --quiet --no-install-recommends \
+RUN <<INSTALL_AQT
+  pip install aqtinstall
+  apt-get -qq update -o=Dpkg::Use-Pty=0
+  apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
     p7zip-full \
     libglib2.0-0
-  apt-get --yes autoremove
-  apt-get clean autoclean
+  apt-get -qq --yes autoremove -o=Dpkg::Use-Pty=0
+  apt-get -qq clean autoclean -o=Dpkg::Use-Pty=0
   rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
-INSTALL_7ZIP
+INSTALL_AQT
 
 RUN <<INSTALL_QT
+  set -e
   mkdir /qt
   cd /qt
-  aqt install-qt linux desktop ${QT_VERSION} ${QT_ARCH} -m ${QT_MODULES} --external "7z"
+  aqt install-qt linux desktop ${QT_VERSION} ${QT_ARCH} -m ${QT_MODULES} --external $(which 7zr)
 INSTALL_QT
 
 
 
+# base QtCreator setup
 FROM ubuntu:${DISTRO} AS qtcreator_base
 ARG DISTRO
 ARG USER
@@ -66,15 +68,16 @@ ENV \
 
 # install prerequisites to run qtcreator, tools and Qt
 RUN <<INSTALL_PREREQUISITES
-  apt-get update --quiet
-  apt-get upgrade --yes --quiet
-  apt-get install --yes --quiet --no-install-recommends \
+  set -e
+  apt-get -qq update -o=Dpkg::Use-Pty=0
+  apt-get -qq --yes upgrade -o=Dpkg::Use-Pty=0
+  apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
     apt-transport-https \
     ca-certificates \
     gnupg \
     wget
-  apt-get update --quiet
-  apt-get install --yes --quiet --no-install-recommends \
+  apt-get -qq update -o=Dpkg::Use-Pty=0
+  apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
     ${RUNTIME_APT} \
     sudo \
     git \
@@ -107,8 +110,8 @@ RUN <<INSTALL_PREREQUISITES
     libglu1-mesa-dev \
     libwayland-egl1 \
     libwayland-cursor0
-  apt-get --yes autoremove
-  apt-get clean autoclean
+  apt-get -qq --yes autoremove -o=Dpkg::Use-Pty=0
+  apt-get -qq clean autoclean -o=Dpkg::Use-Pty=0
   rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 INSTALL_PREREQUISITES
 
@@ -121,12 +124,8 @@ RUN <<INSTALL_QTCREATOR
   ln -s /opt/qtcreator/bin/qtcreator /usr/bin/qtcreator
 INSTALL_QTCREATOR
 
-# preconfigure qtcreator
-COPY config/qtversion.xml /home/${USER}/.config/QtProject/qtcreator/qtversion.xml
-COPY config/QtCreator.ini /home/${USER}/.config/QtProject/QtCreator.ini
-
 # add user for development
-RUN <<SETUP_USER
+RUN --mount=source=./config,target=/qtcreator-config <<SETUP_USER
   if [ "${UID}" = "1000" ] ; then
     userdel --remove ubuntu
   fi
@@ -135,6 +134,8 @@ RUN <<SETUP_USER
   echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER}
   chmod 0440 /etc/sudoers.d/${USER}
   mkdir -p /build
+  mkdir -p /home/${USER}/.config/QtProject/qtcreator
+  cp /qtcreator-config/* /home/${USER}/.config/QtProject/qtcreator
   chown ${UID}:${GID} -R /home/${USER} /build
 SETUP_USER
 
@@ -154,9 +155,9 @@ RUN <<INSTALL_CLANG
   if [ "$CLANG_SOURCE" = "llvm" ] ; then
     wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
     echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-${CLANG_MAJOR} main" > /etc/apt/sources.list.d/llvm.list
-    apt-get update --quiet
+    apt-get -qq update -o=Dpkg::Use-Pty=0
   fi
-  apt-get install --yes --quiet --no-install-recommends \
+  apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
     clang-${CLANG_MAJOR} \
     clang-format-${CLANG_MAJOR} \
     lldb-${CLANG_MAJOR} \
@@ -169,26 +170,25 @@ RUN <<INSTALL_CLANG
   update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-${CLANG_MAJOR} 10
   update-alternatives --install /usr/bin/ld ld /usr/bin/ld.gold 20
   update-alternatives --install /usr/bin/ld ld /usr/bin/ld.bfd 30
-  apt-get --yes autoremove
-  apt-get clean autoclean
+  apt-get -qq --yes autoremove -o=Dpkg::Use-Pty=0
+  apt-get -qq clean autoclean -o=Dpkg::Use-Pty=0
   rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 INSTALL_CLANG
 
 
 
+# final qtcreator-clang
 FROM qtcreator_clang_base AS qtcreator-clang
 ARG USER
 ARG DISTRO
 ARG CLANG_MAJOR
 ARG QTCREATOR_VERSION
 
-LABEL Description="Ubuntu ${DISTRO} - Clang-${CLANG_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
-LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
-
 USER ${USER}
 ENV \
   HOME=/home/${USER} \
   XDG_RUNTIME_DIR=/tmp/runtime-${USER}
+
 
 
 FROM qtcreator_clang_base AS qtcreator_clang_libstdcpp_base
@@ -202,26 +202,24 @@ RUN <<INSTALL_LIBSTDCPP
   if [ "$GCC_SOURCE" = "ppa" ] ; then
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F
     echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/gcc.list
-    apt-get update --quiet
+    apt-get -qq update -o=Dpkg::Use-Pty=0
   fi
-  apt-get install --yes --quiet --no-install-recommends \
+  apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
     libstdc++-${GCC_MAJOR}-dev
-  apt-get --yes autoremove
-  apt-get clean autoclean
+  apt-get -qq --yes autoremove -o=Dpkg::Use-Pty=0
+  apt-get -qq clean autoclean -o=Dpkg::Use-Pty=0
   rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 INSTALL_LIBSTDCPP
 
 
 
+# final qtcreator-clang-libstdcpp
 FROM qtcreator_clang_libstdcpp_base AS qtcreator-clang-libstdcpp
 ARG USER
 ARG DISTRO
 ARG GCC_MAJOR
 ARG CLANG_MAJOR
 ARG QTCREATOR_VERSION
-
-LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + libstdc++-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
-LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
 
 USER ${USER}
 ENV \
@@ -238,15 +236,13 @@ ARG QTCREATOR_VERSION
 ARG QT_ARCH
 ARG QT_VERSION
 
-LABEL Description="Ubuntu ${DISTRO} - Clang${CLANG_MAJOR} + libstdc++-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION} + Qt-${QT_VERSION}"
-LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
-
 COPY --from=qt_base /qt/${QT_VERSION}/gcc_64 /opt/qt
 
 USER ${USER}
 ENV \
   HOME=/home/${USER} \
   XDG_RUNTIME_DIR=/tmp/runtime-${USER}
+
 
 
 FROM qtcreator_base AS qtcreator_gcc_base
@@ -260,15 +256,15 @@ RUN <<INSTALL_GCC_GDB
   if [ "$GCC_SOURCE" = "ppa" ] ; then
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 60C317803A41BA51845E371A1E9377A2BA9EF27F
     echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DISTRO} main" > /etc/apt/sources.list.d/gcc.list
-    apt-get update --quiet
+    apt-get -qq update -o=Dpkg::Use-Pty=0
   fi
-  apt-get install --yes --quiet --no-install-recommends \
+  apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
     gcc-${GCC_MAJOR} \
     g++-${GCC_MAJOR} \
     libstdc++-${GCC_MAJOR}-dev \
     gdb
-  apt-get --yes autoremove
-  apt-get clean autoclean
+  apt-get -qq --yes autoremove -o=Dpkg::Use-Pty=0
+  apt-get -qq clean autoclean -o=Dpkg::Use-Pty=0
   rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 INSTALL_GCC_GDB
 
@@ -280,13 +276,11 @@ ARG DISTRO
 ARG GCC_MAJOR
 ARG QTCREATOR_VERSION
 
-LABEL Description="Ubuntu ${DISTRO} - GCC-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION}"
-LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
-
 USER ${USER}
 ENV \
   HOME=/home/${USER} \
   XDG_RUNTIME_DIR=/tmp/runtime-${USER}
+
 
 
 FROM qtcreator_gcc_base AS qtcreator-gcc-qt
@@ -296,9 +290,6 @@ ARG GCC_MAJOR
 ARG QTCREATOR_VERSION
 ARG QT_ARCH
 ARG QT_VERSION
-
-LABEL Description="Ubuntu ${DISTRO} - GCC-${GCC_MAJOR} + QtCreator-${QTCREATOR_VERSION} + Qt-${QT_VERSION}"
-LABEL org.opencontainers.image.source = "https://github.com/arBmind/qtcreator-containers"
 
 COPY --from=qt_base /qt/${QT_VERSION}/gcc_64 /opt/qt
 
