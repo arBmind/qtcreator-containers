@@ -1,33 +1,34 @@
 ARG DISTRO=noble
+ARG QTCREATOR_BASE_IMAGE=ubuntu:${DISTRO}
 ARG USER=user
 ARG UID=1000
 ARG GID=1000
-ARG CLANG_MAJOR=18
+ARG CLANG_MAJOR=21
 # clang source options:
 # apt - directly use apt version
 # llvm - add llvm distro repo
-ARG CLANG_SOURCE=apt
+ARG CLANG_SOURCE=llvm
 ARG GCC_MAJOR=14
 # gcc source options:
 # apt - directly use apt version
 # ppa - add toolchain ppa
 ARG GCC_SOURCE=apt
-ARG QTCREATOR_VERSION="13.0.2-patched"
-ARG QTCREATOR_URL="https://github.com/hicknhack-software/Qt-Creator/releases/download/v13.0.2-patched/qtcreator-linux-x64-9428386763.7z"
+ARG QTCREATOR_VERSION="17.0.1-patched"
+ARG QTCREATOR_URL="https://github.com/hicknhack-software/Qt-Creator/releases/download/v17.0.1-patched-2025-08-22/qtcreator-linux-x64-17475136203.7z"
 ARG QT_ARCH=linux_gcc_64
-ARG QT_VERSION=6.7.1
+ARG QT_VERSION=6.9.2
 ARG QT_MODULES=qtshadertools
-ARG RUNTIME_APT="libicu74 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
+ARG RUNTIME_APT="icu-devtools libglib2.0-0 libdbus-1-3 libpcre2-16-0"
 # ARG RUNTIME_LUNAR="libicu72 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
 # ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 
 
 FROM python:3.10-slim AS qt_base
-ARG QT_ARCH
-ARG QT_VERSION
-ARG QT_MODULES
-ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-ARG DEBIAN_FRONTEND=noninteractive
+ARG \
+  QT_ARCH \
+  QT_VERSION \
+  QT_MODULES \
+  DEBIAN_FRONTEND=noninteractive
 
 RUN <<INSTALL_AQT
   pip install aqtinstall
@@ -50,16 +51,15 @@ INSTALL_QT
 
 
 # base QtCreator setup
-FROM ubuntu:${DISTRO} AS qtcreator_base
-ARG DISTRO
-ARG USER
-ARG UID
-ARG GID
-ARG QTCREATOR_URL
-ARG RUNTIME_APT
-ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-ARG DEBIAN_FRONTEND=noninteractive
-
+FROM ${QTCREATOR_BASE_IMAGE} AS qtcreator_base
+ARG \
+  DISTRO \
+  USER \
+  UID \
+  GID \
+  QTCREATOR_URL \
+  RUNTIME_APT \
+  DEBIAN_FRONTEND=noninteractive
 ENV \
   LANG=C.UTF-8 \
   LC_ALL=C.UTF-8 \
@@ -144,17 +144,24 @@ WORKDIR /build
 
 
 FROM qtcreator_base AS qtcreator_clang_base
-ARG DISTRO
-ARG CLANG_MAJOR
-ARG CLANG_SOURCE
-ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-ARG DEBIAN_FRONTEND=noninteractive
+ARG \
+  DISTRO \
+  CLANG_MAJOR \
+  CLANG_SOURCE \
+  DEBIAN_FRONTEND=noninteractive
 
 # install Clang (https://apt.llvm.org/) with format and debugger
 RUN <<INSTALL_CLANG
   if [ "$CLANG_SOURCE" = "llvm" ] ; then
-    wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
-    echo "deb http://apt.llvm.org/${DISTRO}/ llvm-toolchain-${DISTRO}-${CLANG_MAJOR} main" > /etc/apt/sources.list.d/llvm.list
+    wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key > /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+    tee /etc/apt/sources.list.d/llvm.sources <<LLVM_SOURCES
+Enabled: yes
+Types: deb
+URIs: http://apt.llvm.org/${DISTRO}/
+Suites: llvm-toolchain-${DISTRO}-${CLANG_MAJOR}
+Components: main
+Signed-By: /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+LLVM_SOURCES
     apt-get -qq update -o=Dpkg::Use-Pty=0
   fi
   apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
@@ -180,9 +187,6 @@ INSTALL_CLANG
 # final qtcreator-clang
 FROM qtcreator_clang_base AS qtcreator-clang
 ARG USER
-ARG DISTRO
-ARG CLANG_MAJOR
-ARG QTCREATOR_VERSION
 
 USER ${USER}
 ENV \
@@ -192,11 +196,12 @@ ENV \
 
 
 FROM qtcreator_clang_base AS qtcreator_clang_libstdcpp_base
-ARG DISTRO
-ARG GCC_MAJOR
-ARG GCC_SOURCE
-ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-ARG DEBIAN_FRONTEND=noninteractive
+ARG \
+  DISTRO \
+  GCC_MAJOR \
+  GCC_SOURCE \
+  APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \
+  DEBIAN_FRONTEND=noninteractive
 
 RUN <<INSTALL_LIBSTDCPP
   if [ "$GCC_SOURCE" = "ppa" ] ; then
@@ -216,10 +221,6 @@ INSTALL_LIBSTDCPP
 # final qtcreator-clang-libstdcpp
 FROM qtcreator_clang_libstdcpp_base AS qtcreator-clang-libstdcpp
 ARG USER
-ARG DISTRO
-ARG GCC_MAJOR
-ARG CLANG_MAJOR
-ARG QTCREATOR_VERSION
 
 USER ${USER}
 ENV \
@@ -227,14 +228,11 @@ ENV \
   XDG_RUNTIME_DIR=/tmp/runtime-${USER}
 
 
+
 FROM qtcreator_clang_libstdcpp_base AS qtcreator-clang-libstdcpp-qt
-ARG USER
-ARG DISTRO
-ARG CLANG_MAJOR
-ARG GCC_MAJOR
-ARG QTCREATOR_VERSION
-ARG QT_ARCH
-ARG QT_VERSION
+ARG \
+  USER \
+  QT_VERSION
 
 COPY --from=qt_base /qt/${QT_VERSION}/gcc_64 /opt/qt
 
@@ -246,11 +244,12 @@ ENV \
 
 
 FROM qtcreator_base AS qtcreator_gcc_base
-ARG DISTRO
-ARG GCC_MAJOR
-ARG GCC_SOURCE
-ARG APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1
-ARG DEBIAN_FRONTEND=noninteractive
+ARG \
+  DISTRO \
+  GCC_MAJOR \
+  GCC_SOURCE \
+  APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 \
+  DEBIAN_FRONTEND=noninteractive
 
 RUN <<INSTALL_GCC_GDB
   if [ "$GCC_SOURCE" = "ppa" ] ; then
@@ -272,9 +271,6 @@ INSTALL_GCC_GDB
 
 FROM qtcreator_gcc_base AS qtcreator-gcc
 ARG USER
-ARG DISTRO
-ARG GCC_MAJOR
-ARG QTCREATOR_VERSION
 
 USER ${USER}
 ENV \
@@ -284,12 +280,9 @@ ENV \
 
 
 FROM qtcreator_gcc_base AS qtcreator-gcc-qt
-ARG USER
-ARG DISTRO
-ARG GCC_MAJOR
-ARG QTCREATOR_VERSION
-ARG QT_ARCH
-ARG QT_VERSION
+ARG \
+  USER \
+  QT_VERSION
 
 COPY --from=qt_base /qt/${QT_VERSION}/gcc_64 /opt/qt
 
