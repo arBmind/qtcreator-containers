@@ -1,3 +1,6 @@
+# syntax=docker/dockerfile:1
+# check=skip=SecretsUsedInArgOrEnv
+
 ARG DISTRO=noble
 ARG QTCREATOR_BASE_IMAGE=ubuntu:${DISTRO}
 ARG USER=user
@@ -13,39 +16,55 @@ ARG GCC_MAJOR=14
 # apt - directly use apt version
 # ppa - add toolchain ppa
 ARG GCC_SOURCE=apt
+# note: this AQT version has patch for latest python pool issues (no new release yet)
+ARG AQT_WHL_URL=https://github.com/arBmind/aqtinstall/releases/download/3.3.1-dev/aqtinstall-3.3.1.dev19-py3-none-any.whl
 ARG QTCREATOR_VERSION="17.0.1-patched"
 ARG QTCREATOR_URL="https://github.com/hicknhack-software/Qt-Creator/releases/download/v17.0.1-patched-2025-08-22/qtcreator-linux-x64-17475136203.7z"
 ARG QT_ARCH=linux_gcc_64
 ARG QT_VERSION=6.9.2
 ARG QT_MODULES=qtshadertools
-ARG RUNTIME_APT="icu-devtools libglib2.0-0 libdbus-1-3 libpcre2-16-0"
+ARG RUNTIME_APT="icu-devtools libglib2.0-0 libdbus-1-3 libpcre2-16-0 libbrotli1"
 # ARG RUNTIME_LUNAR="libicu72 libglib2.0-0 libdbus-1-3 libpcre2-16-0"
 # ARG RUNTIME_XENIAL="libicu55 libglib2.0-0"
 
 
-FROM python:3.10-slim AS qt_base
+FROM python:3.13-slim AS qt_base
 ARG \
+  AQT_WHL_URL \
   QT_ARCH \
   QT_VERSION \
   QT_MODULES \
   DEBIAN_FRONTEND=noninteractive
 
 RUN <<INSTALL_AQT
-  pip install aqtinstall
   apt-get -qq update -o=Dpkg::Use-Pty=0
   apt-get -qq --yes install -o=Dpkg::Use-Pty=0 --no-install-recommends \
+    wget \
     p7zip-full \
     libglib2.0-0
   apt-get -qq --yes autoremove -o=Dpkg::Use-Pty=0
   apt-get -qq clean autoclean -o=Dpkg::Use-Pty=0
   rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+  if [ "$AQT_WHL_URL" != "" ] ; then
+    FILENAME=$(basename "$AQT_WHL_URL")
+    wget -q -c ${AQT_WHL_URL} -O /tmp/$FILENAME
+    pip install /tmp/$FILENAME
+    rm /tmp/$FILENAME
+  else
+    pip install aqtinstall
+  fi
 INSTALL_AQT
 
+# note: /tmp/7z.sh adds missing -snld20 option to allow 7z to extract symlinks
 RUN <<INSTALL_QT
   set -e
   mkdir /qt
   cd /qt
-  aqt install-qt linux desktop ${QT_VERSION} ${QT_ARCH} -m ${QT_MODULES} --external $(which 7zr)
+  echo '#!/bin/bash' > /tmp/7z.sh
+  echo "$(which 7zr) \"\$@\" -snld20" >> /tmp/7z.sh
+  chmod u+x /tmp/7z.sh
+  aqt install-qt linux desktop ${QT_VERSION} ${QT_ARCH} -m ${QT_MODULES} --external /tmp/7z.sh
+  rm /tmp/7z.sh
 INSTALL_QT
 
 
