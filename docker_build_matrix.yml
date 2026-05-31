@@ -2,27 +2,31 @@
 distro: "noble"
 
 qtcreator:
-  - version: "18.0.1"
-    url: "https://github.com/qt-creator/qt-creator/releases/download/v18.0.1/qtcreator-linux-x64-18.0.1.7z"
+  - version: "19.0.2"
+    url: "https://github.com/qt-creator/qt-creator/releases/download/v19.0.2/qtcreator-linux-x64-19.0.2.7z"
 
-  - version: "18.0.1-patched"
-    url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v18.0.1-patched-snapshot-2025-12-13/qtcreator-linux-x64-20510862668.7z"
+  - version: "19.0.2-patched"
+    url: "https://github.com/hicknhack-software/Qt-Creator/releases/download/v19.0.2-patched-2026-05-17/qtcreator-linux-x64-26712405851.7z"
 
 clang:
   # - { major: 17, source: "apt" }
-  - { major: 18, source: "llvm" }
+  # - { major: 18, source: "llvm" }
   - { major: 19, source: "llvm" }
   - { major: 20, source: "llvm" }
   - { major: 21, source: "llvm" }
+  - { major: 22, source: "llvm" }
 
 gcc:
   # - { major: 12, source: "apt" }
   - { major: 13, source: "apt", distro: "noble" }
   - { major: 14, source: "apt", distro: "noble" }
-  - { major: 15, source: "apt", distro: "questing" }
+  - { major: 15, source: "apt", distro: "resolute" }
+  - { major: 16, source: "apt", distro: "resolute" }
 
 qt:
   # - { version: "6.6.3", arch: "gcc_64" }
-  - { version: "6.8.3", arch: "linux_gcc_64" }
+  # - { version: "6.7.3", arch: "linux_gcc_64" }
+  # - { version: "6.8.3", arch: "linux_gcc_64" }
   - { version: "6.9.3", arch: "linux_gcc_64" }
-  - { version: "6.10.1", arch: "linux_gcc_64" }
+  - { version: "6.10.3", arch: "linux_gcc_64" }
+  - { version: "6.11.1", arch: "linux_gcc_64" }
